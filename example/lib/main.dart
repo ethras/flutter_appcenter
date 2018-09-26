@@ -52,17 +52,13 @@ class _MyAppState extends State<MyApp> {
             children: <Widget>[
               Text('Running on: $_platformVersion\n'),
               RaisedButton(
-                child: Text("Configure"),
-                onPressed: _configure,
-              ),
-              RaisedButton(
                 child: Text("Start"),
                 onPressed: _start,
               ),
               RaisedButton(
                 child: Text("Track test event"),
                 onPressed: _trackTestEvent,
-              )
+              ),
             ],
           ),
         ),
@@ -70,14 +66,9 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  _configure() async {
-    // TODO remove secret
-    await FlutterAppcenter.configure("4e969c6c-d969-43ff-85b0-84a0bab0d62f");
-  }
-
   _start() async {
     // TODO pick services
-    await FlutterAppcenter.start([
+    await FlutterAppcenter.start("4e969c6c-d969-43ff-85b0-84a0bab0d62f", [
       AppCenterService.Crashes,
       AppCenterService.Analytics,
       AppCenterService.Distribute

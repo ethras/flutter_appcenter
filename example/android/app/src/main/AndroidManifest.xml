@@ -16,6 +16,9 @@
         android:name="io.flutter.app.FlutterApplication"
         android:label="flutter_appcenter_example"
         android:icon="@mipmap/ic_launcher">
+        <activity android:name="com.example.flutterappcenter.UpdateDialogActivity"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+        </activity>
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"

@@ -11,16 +11,11 @@ class FlutterAppcenter {
     return version;
   }
 
-  static Future configure(String appSecret) async {
-    await _channel
-        .invokeMethod("configure", <String, String>{"appSecret": appSecret});
-  }
-
-  static Future start(List<AppCenterService> services) async {
+  static Future start(String appSecret, List<AppCenterService> services) async {
     List<String> servicesString =
         services.map((service) => serviceToString(service)).toList();
     await _channel
-        .invokeMethod("start", <String, dynamic>{"services": servicesString});
+        .invokeMethod("start", <String, dynamic>{"services": servicesString, "appSecret": appSecret});
   }
 
   static Future trackEvent(String eventName,

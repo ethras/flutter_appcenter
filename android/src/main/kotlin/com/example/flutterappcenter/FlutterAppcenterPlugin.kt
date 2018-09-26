@@ -1,6 +1,10 @@
 package com.example.flutterappcenter
 
+import android.app.Activity
 import android.app.Application
+import android.content.Intent
+import android.support.v7.app.AlertDialog
+import android.util.Log
 import com.microsoft.appcenter.AppCenter
 import com.microsoft.appcenter.AppCenterService
 import com.microsoft.appcenter.analytics.Analytics
@@ -10,36 +14,34 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.MethodCall
+import io.flutter.plugin.common.PluginRegistry
 import io.flutter.plugin.common.PluginRegistry.Registrar
 
 
-class FlutterAppcenterPlugin(private val app: Application) : MethodCallHandler {
-    var isConfigured = false
-    var appSecret: String = ""
+class FlutterAppcenterPlugin(private val registrar: Registrar) : MethodCallHandler {
+    private var isConfigured = false
+    private var appSecret: String = ""
 
     companion object {
         @JvmStatic
         fun registerWith(registrar: Registrar): Unit {
             val channel = MethodChannel(registrar.messenger(), "flutter_appcenter")
-            channel.setMethodCallHandler(FlutterAppcenterPlugin(registrar.activity().application))
+            val plugin = FlutterAppcenterPlugin(registrar)
+            channel.setMethodCallHandler(plugin)
         }
     }
 
     override fun onMethodCall(call: MethodCall, result: Result): Unit {
         val method = call.method
-        when(method) {
+        when (method) {
             "getPlatformVersion" -> result.success("Android ${android.os.Build.VERSION.RELEASE}")
-            "configure" -> {
-                val appSecret = call.argument<String>("appSecret")
-                configure(appSecret)
-                result.success(null)
-            }
             "start" -> {
+                val appSecret = call.argument<String>("appSecret")
                 val services = call.argument<List<String>>("services")
-                start(services)
+                start(appSecret, services)
                 result.success(null)
             }
-            "trackEvent" ->  {
+            "trackEvent" -> {
                 val eventName = call.argument<String>("eventName")
                 val properties = call.argument<Map<String, String>>("properties")
                 trackEvent(eventName, properties)
@@ -49,13 +51,15 @@ class FlutterAppcenterPlugin(private val app: Application) : MethodCallHandler {
         }
     }
 
-    private fun configure(appSecret: String) {
+
+    private fun start(appSecret: String, services: List<String>) {
+        if (isConfigured) {
+            return
+        }
+
         this.appSecret = appSecret
         isConfigured = true
-    }
 
-
-    private fun start(services: List<String>) {
         val servicesClasses = arrayListOf<Class<out AppCenterService>>()
         if (services.contains("analytics")) {
             servicesClasses.add(Analytics::class.java)
@@ -65,12 +69,16 @@ class FlutterAppcenterPlugin(private val app: Application) : MethodCallHandler {
         }
         if (services.contains("distribute")) {
             servicesClasses.add(Distribute::class.java)
+            val customDistributeListener = CustomDistributeListener()
+            registrar.addActivityResultListener(customDistributeListener)
+            Distribute.setListener(customDistributeListener)
         }
 
         var servicesClassesArray = arrayOfNulls<Class<out AppCenterService>>(servicesClasses.count())
         servicesClassesArray = servicesClasses.toArray(servicesClassesArray)
 
-        AppCenter.start(app, appSecret, *servicesClassesArray)
+        AppCenter.start(registrar.activity().application, appSecret, *servicesClassesArray)
+        Log.i("Flutter-AppCenter", "AppCenter started")
     }
 
     //--------------------------------------
