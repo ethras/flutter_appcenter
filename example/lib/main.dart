@@ -42,15 +42,50 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return new MaterialApp(
-      home: new Scaffold(
-        appBar: new AppBar(
-          title: const Text('Plugin example app'),
+    return MaterialApp(
+      home: Scaffold(
+        appBar: AppBar(
+          title: Text('Plugin example app'),
         ),
-        body: new Center(
-          child: new Text('Running on: $_platformVersion\n'),
+        body: Center(
+          child: Column(
+            children: <Widget>[
+              Text('Running on: $_platformVersion\n'),
+              RaisedButton(
+                child: Text("Configure"),
+                onPressed: _configure,
+              ),
+              RaisedButton(
+                child: Text("Start"),
+                onPressed: _start,
+              ),
+              RaisedButton(
+                child: Text("Track test event"),
+                onPressed: _trackTestEvent,
+              )
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  _configure() async {
+    // TODO remove secret
+    await FlutterAppcenter.configure("4e969c6c-d969-43ff-85b0-84a0bab0d62f");
+  }
+
+  _start() async {
+    // TODO pick services
+    await FlutterAppcenter.start([
+      AppCenterService.Crashes,
+      AppCenterService.Analytics,
+      AppCenterService.Distribute
+    ]);
+  }
+
+  _trackTestEvent() async {
+    await FlutterAppcenter.trackEvent(
+        "testEvent", <String, String>{"hello": "world"});
   }
 }
