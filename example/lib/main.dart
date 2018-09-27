@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'dart:async';
 
@@ -68,7 +70,12 @@ class _MyAppState extends State<MyApp> {
 
   _start() async {
     // TODO pick services
-    await FlutterAppcenter.start("4e969c6c-d969-43ff-85b0-84a0bab0d62f", [
+    String androidAppId = "4e969c6c-d969-43ff-85b0-84a0bab0d62f";
+    String iOsAppId = "0eadeea1-ef17-455d-baa7-64c5c165713c";
+
+    final appId = Platform.isIOS ? iOsAppId : androidAppId;
+
+    await FlutterAppcenter.start(appId, [
       AppCenterService.Crashes,
       AppCenterService.Analytics,
       AppCenterService.Distribute
