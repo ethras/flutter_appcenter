@@ -14,7 +14,12 @@ A new flutter plugin project.
   s.source           = { :path => '.' }
   s.source_files = 'Classes/**/*'
   s.public_header_files = 'Classes/**/*.h'
+  s.static_framework = true
   s.dependency 'Flutter'
+  s.dependency 'AppCenter'
+  s.dependency 'AppCenter/Analytics'
+  s.dependency 'AppCenter/Crashes'
+  s.dependency 'AppCenter/Distribute'
   
   s.ios.deployment_target = '8.0'
 end
