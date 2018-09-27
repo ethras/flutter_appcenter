@@ -31,6 +31,7 @@ public class SwiftFlutterAppcenterPlugin: NSObject, FlutterPlugin {
                 result(FlutterError(code: "appSecret missing", message: nil, details: nil))
             }
         case "trackEvent":
+            NSLog("Track event")
             if let eventName = arguments?["eventName"] as? String {
                 let properties = arguments?["properties"] as? [String: String]
                 trackEvent(eventName: eventName, properties: properties)
