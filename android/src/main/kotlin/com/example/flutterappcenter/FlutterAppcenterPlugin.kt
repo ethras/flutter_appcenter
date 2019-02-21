@@ -1,20 +1,15 @@
 package com.example.flutterappcenter
 
-import android.app.Activity
-import android.app.Application
-import android.content.Intent
-import android.support.v7.app.AlertDialog
 import android.util.Log
 import com.microsoft.appcenter.AppCenter
 import com.microsoft.appcenter.AppCenterService
 import com.microsoft.appcenter.analytics.Analytics
 import com.microsoft.appcenter.crashes.Crashes
 import com.microsoft.appcenter.distribute.Distribute
+import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
-import io.flutter.plugin.common.MethodCall
-import io.flutter.plugin.common.PluginRegistry
 import io.flutter.plugin.common.PluginRegistry.Registrar
 
 
@@ -38,14 +33,24 @@ class FlutterAppcenterPlugin(private val registrar: Registrar) : MethodCallHandl
             "start" -> {
                 val appSecret = call.argument<String>("appSecret")
                 val services = call.argument<List<String>>("services")
-                start(appSecret, services)
-                result.success(null)
+                if (appSecret == null || services == null) {
+                    result.error("Missing parameter", "Parameter are missing", null)
+                }
+                else {
+                    start(appSecret, services)
+                    result.success(null)
+                }
             }
             "trackEvent" -> {
                 val eventName = call.argument<String>("eventName")
                 val properties = call.argument<Map<String, String>>("properties")
-                trackEvent(eventName, properties)
-                result.success(null)
+                if (eventName == null || properties == null) {
+                    result.error("Missing parameter", "Parameter are missing", null)
+                }
+                else {
+                    trackEvent(eventName, properties)
+                    result.success(null)
+                }
             }
             else -> result.notImplemented()
         }
