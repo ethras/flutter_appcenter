@@ -1,5 +1,6 @@
 #
-# To learn more about a Podspec see http://guides.cocoapods.org/syntax/podspec.html
+# To learn more about a Podspec see http://guides.cocoapods.org/syntax/podspec.html.
+# Run `pod lib lint flutter_appcenter_bundle.podspec' to validate before publishing.
 #
 Pod::Spec.new do |s|
   s.name             = 'flutter_appcenter'
@@ -13,14 +14,13 @@ A new flutter plugin project.
   s.author           = { 'Your Company' => 'email@example.com' }
   s.source           = { :path => '.' }
   s.source_files = 'Classes/**/*'
-  s.public_header_files = 'Classes/**/*.h'
-  s.static_framework = true
+  s.dependency 'AppCenter', '4.1.0'
+  s.dependency 'AppCenter/Distribute', '4.1.0'
   s.dependency 'Flutter'
-  s.dependency 'AppCenter'
-  s.dependency 'AppCenter/Analytics'
-  s.dependency 'AppCenter/Crashes'
-  s.dependency 'AppCenter/Distribute'
-  
-  s.ios.deployment_target = '8.0'
-end
+  s.platform = :ios, '10.0'
+  s.static_framework = true
 
+  # Flutter.framework does not contain a i386 slice. Only x86_64 simulators are supported.
+  s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES', 'VALID_ARCHS[sdk=iphonesimulator*]' => 'x86_64' }
+  s.swift_version = '5.0'
+end

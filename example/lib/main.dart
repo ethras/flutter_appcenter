@@ -1,49 +1,54 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'dart:async';
 
-import 'package:flutter/services.dart';
+import 'package:package_info/package_info.dart';
 import 'package:flutter_appcenter/flutter_appcenter.dart';
 
-void main() => runApp(new MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await FlutterAppCenter.startAsync(
+    appSecretAndroid: '4e969c6c-d969-43ff-85b0-84a0bab0d62f',
+    appSecretIOS: '0eadeea1-ef17-455d-baa7-64c5c165713c',
+    enableDistribute: false,
+  );
+  await FlutterAppCenter.configureDistributeDebugAsync(enabled: false);
+
+  runApp(MyApp());
+}
 
 class MyApp extends StatefulWidget {
   @override
-  _MyAppState createState() => new _MyAppState();
+  _MyAppState createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
-  String _platformVersion = 'Unknown';
-  String androidAppId = "4e969c6c-d969-43ff-85b0-84a0bab0d62f";
-    String iOsAppId = "0eadeea1-ef17-455d-baa7-64c5c165713c";
-    String appId = "";
+  PackageInfo _packageInfo;
+  bool _isCrashesEnabled;
+  bool _isAnalyticsEnabled;
+  bool _isDistributeEnabled;
 
   @override
   void initState() {
     super.initState();
-    initPlatformState();
-     appId = Platform.isIOS ? iOsAppId : androidAppId;
-
-  }
-
-  // Platform messages are asynchronous, so we initialize in an async method.
-  Future<void> initPlatformState() async {
-    String platformVersion;
-    // Platform messages may fail, so we use a try/catch PlatformException.
-    try {
-      platformVersion = await FlutterAppcenter.platformVersion;
-    } on PlatformException {
-      platformVersion = 'Failed to get platform version.';
-    }
-
-    // If the widget was removed from the tree while the asynchronous platform
-    // message was in flight, we want to discard the reply rather than calling
-    // setState to update our non-existent appearance.
-    if (!mounted) return;
-
-    setState(() {
-      _platformVersion = platformVersion;
+    FlutterAppCenter.trackEventAsync('_MyAppState.initState');
+    PackageInfo.fromPlatform().then((v) {
+      setState(() {
+        _packageInfo = v;
+      });
+    });
+    FlutterAppCenter.isCrashesEnabledAsync().then((v) {
+      setState(() {
+        _isCrashesEnabled = v;
+      });
+    });
+    FlutterAppCenter.isAnalyticsEnabledAsync().then((v) {
+      setState(() {
+        _isAnalyticsEnabled = v;
+      });
+    });
+    FlutterAppCenter.isDistributeEnabledAsync().then((v) {
+      setState(() {
+        _isDistributeEnabled = v;
+      });
     });
   }
 
@@ -52,40 +57,30 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          title: Text('Plugin example app'),
+          title: const Text('Plugin example app'),
         ),
-        body: Center(
-          child: Column(
-            children: <Widget>[
-              Text('Running on: $_platformVersion\n'),
-              Text('App Id : $appId'),
-              RaisedButton(
-                child: Text("Start"),
-                onPressed: _start,
-              ),
-              RaisedButton(
-                child: Text("Track test event"),
-                onPressed: _trackTestEvent,
-              ),
-            ],
-          ),
-        ),
+        body: Container(
+            padding: EdgeInsets.all(20),
+            child: _packageInfo == null
+                ? RefreshProgressIndicator()
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text('App name:\n${_packageInfo.appName}'),
+                      Text(''),
+                      Text('Package name:\n${_packageInfo.packageName}'),
+                      Text(''),
+                      Text('Version:\n${_packageInfo.version}'),
+                      Text(''),
+                      Text('Build:\n${_packageInfo.buildNumber}'),
+                      Text(''),
+                      Text('IsCrashesEnabled: $_isCrashesEnabled'),
+                      Text('IsAnalyticsEnabled: $_isAnalyticsEnabled'),
+                      Text('IsDistributeEnabled: $_isDistributeEnabled'),
+                    ],
+                  )),
       ),
     );
-  }
-
-  _start() async {
-    // TODO pick services
-
-    await FlutterAppcenter.start(appId, [
-      AppCenterService.Crashes,
-      AppCenterService.Analytics,
-      AppCenterService.Distribute
-    ]);
-  }
-
-  _trackTestEvent() async {
-    await FlutterAppcenter.trackEvent(
-        "testEvent", <String, String>{"hello": "world"});
   }
 }

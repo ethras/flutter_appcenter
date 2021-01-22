@@ -1,11 +1,15 @@
 package com.example.flutterappcenter
 
 import android.util.Log
+import androidx.annotation.NonNull
 import com.microsoft.appcenter.AppCenter
-import com.microsoft.appcenter.AppCenterService
 import com.microsoft.appcenter.analytics.Analytics
 import com.microsoft.appcenter.crashes.Crashes
 import com.microsoft.appcenter.distribute.Distribute
+import com.microsoft.appcenter.distribute.UpdateTrack
+import io.flutter.embedding.engine.plugins.FlutterPlugin
+import io.flutter.embedding.engine.plugins.activity.ActivityAware
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
@@ -13,83 +17,130 @@ import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry.Registrar
 
 
-class FlutterAppcenterPlugin(private val registrar: Registrar) : MethodCallHandler {
-    private var isConfigured = false
-    private var appSecret: String = ""
+class FlutterAppcenterPlugin(private val registrar: Registrar) : FlutterPlugin, MethodCallHandler, ActivityAware {
+    override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
+        val channel = MethodChannel(flutterPluginBinding.binaryMessenger, methodChannelName)
+        channel.setMethodCallHandler(FlutterAppcenterBundlePlugin())
+    }
 
+    // This static function is optional and equivalent to onAttachedToEngine. It supports the old
+    // pre-Flutter-1.12 Android projects. You are encouraged to continue supporting
+    // plugin registration via this function while apps migrate to use the new Android APIs
+    // post-flutter-1.12 via https://flutter.dev/go/android-project-migration.
+    //
+    // It is encouraged to share logic between onAttachedToEngine and registerWith to keep
+    // them functionally equivalent. Only one of onAttachedToEngine or registerWith will be called
+    // depending on the user's project. onAttachedToEngine or registerWith must both be defined
+    // in the same class.
     companion object {
+        const val methodChannelName = "com.github.hanabi1224.flutter_appcenter_bundle"
+
+        var application: Application? = null
+
         @JvmStatic
-        fun registerWith(registrar: Registrar): Unit {
-            val channel = MethodChannel(registrar.messenger(), "flutter_appcenter")
-            val plugin = FlutterAppcenterPlugin(registrar)
-            channel.setMethodCallHandler(plugin)
+        fun registerWith(registrar: Registrar) {
+            application = registrar.activity().application
+            val channel = MethodChannel(registrar.messenger(), methodChannelName)
+            channel.setMethodCallHandler(FlutterAppcenterBundlePlugin())
         }
     }
 
-    override fun onMethodCall(call: MethodCall, result: Result): Unit {
-        val method = call.method
-        when (method) {
-            "getPlatformVersion" -> result.success("Android ${android.os.Build.VERSION.RELEASE}")
-            "start" -> {
-                val appSecret = call.argument<String>("appSecret")
-                val services = call.argument<List<String>>("services")
-                if (appSecret == null || services == null) {
-                    result.error("Missing parameter", "Parameter are missing", null)
+    override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
+        Log.d("onMethodCall", "[${methodChannelName}] ${call.method}")
+        try {
+            when (call.method) {
+                "start" -> {
+                    if (application == null) {
+                        val error = "Fail to resolve Application on registration"
+                        Log.e(call.method, error)
+                        result.error(call.method, error, Exception(error))
+                        return
+                    }
+
+                    val appSecret = call.argument<String>("secret")
+                    val usePrivateTrack = call.argument<Boolean>("usePrivateTrack")
+                    if (usePrivateTrack == true){
+                        Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
+                    }
+
+                    if (appSecret == null || appSecret.isEmpty()) {
+                        val error = "App secret is not set"
+                        Log.e(call.method, error)
+                        result.error(call.method, error, Exception(error))
+                        return
+                    }
+
+                    AppCenter.start(application, appSecret, Analytics::class.java, Crashes::class.java, Distribute::class.java)
                 }
-                else {
-                    start(appSecret, services)
-                    result.success(null)
+                "trackEvent" -> {
+                    val name = call.argument<String>("name")
+                    val properties = call.argument<Map<String, String>>("properties")
+                    Analytics.trackEvent(name, properties)
+                }
+                "isDistributeEnabled" -> {
+                    result.success(Distribute.isEnabled().get())
+                    return
+                }
+                "getInstallId" -> {
+                    result.success(AppCenter.getInstallId().get()?.toString())
+                    return
+                }
+                "configureDistribute" -> {
+                    val value = call.arguments as Boolean
+                    Distribute.setEnabled(value).get()
+                }
+                "configureDistributeDebug" -> {
+                    val value = call.arguments as Boolean
+                    Distribute.setEnabledForDebuggableBuild(value)
+                }
+                "disableAutomaticCheckForUpdate" -> {
+                    Distribute.disableAutomaticCheckForUpdate()
+                }
+                "checkForUpdate" -> {
+                    Distribute.checkForUpdate()
+                }
+                "isCrashesEnabled" -> {
+                    result.success(Crashes.isEnabled().get())
+                    return
+                }
+                "configureCrashes" -> {
+                    val value = call.arguments as Boolean
+                    Crashes.setEnabled(value).get()
+                }
+                "isAnalyticsEnabled" -> {
+                    result.success(Analytics.isEnabled().get())
+                    return
+                }
+                "configureAnalytics" -> {
+                    val value = call.arguments as Boolean
+                    Analytics.setEnabled(value).get()
+                }
+                else -> {
+                    result.notImplemented()
                 }
             }
-            "trackEvent" -> {
-                val eventName = call.argument<String>("eventName")
-                val properties = call.argument<Map<String, String>>("properties")
-                if (eventName == null || properties == null) {
-                    result.error("Missing parameter", "Parameter are missing", null)
-                }
-                else {
-                    trackEvent(eventName, properties)
-                    result.success(null)
-                }
-            }
-            else -> result.notImplemented()
+
+            result.success(null)
+        } catch (error: Exception) {
+            Log.e("onMethodCall", methodChannelName, error)
+            throw error
         }
     }
 
-
-    private fun start(appSecret: String, services: List<String>) {
-        if (isConfigured) {
-            return
-        }
-
-        this.appSecret = appSecret
-        isConfigured = true
-
-        val servicesClasses = arrayListOf<Class<out AppCenterService>>()
-        if (services.contains("analytics")) {
-            servicesClasses.add(Analytics::class.java)
-        }
-        if (services.contains("crashes")) {
-            servicesClasses.add(Crashes::class.java)
-        }
-        if (services.contains("distribute")) {
-            servicesClasses.add(Distribute::class.java)
-            val customDistributeListener = CustomDistributeListener()
-            registrar.addActivityResultListener(customDistributeListener)
-            Distribute.setListener(customDistributeListener)
-        }
-
-        var servicesClassesArray = arrayOfNulls<Class<out AppCenterService>>(servicesClasses.count())
-        servicesClassesArray = servicesClasses.toArray(servicesClassesArray)
-
-        AppCenter.start(registrar.activity().application, appSecret, *servicesClassesArray)
-        Log.i("Flutter-AppCenter", "AppCenter started")
+    override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
     }
 
-    //--------------------------------------
-    // Analytics
+    override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+        val activity = binding.activity
+        application = activity.application
+    }
 
-    private fun trackEvent(eventName: String, properties: Map<String, String>) {
-        Analytics.trackEvent(eventName, properties)
+    override fun onDetachedFromActivity() {
+    }
+
+    override fun onDetachedFromActivityForConfigChanges() {
+    }
+
+    override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
     }
 }

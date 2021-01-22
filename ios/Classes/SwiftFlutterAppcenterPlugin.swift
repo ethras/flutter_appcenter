@@ -13,55 +13,75 @@ public class SwiftFlutterAppcenterPlugin: NSObject, FlutterPlugin {
     }
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-        let method = call.method
-        let arguments = call.arguments as? [String: Any]
-        
-        switch (method) {
+        debugPrint(call.method)
+        switch call.method {
         case "start":
-            if let appSecret = arguments?["appSecret"] as? String {
-                if let services = arguments?["services"] as? [String] {
-                    result(nil)
-                    start(appSecret: appSecret, services: services)
-                }
-                else {
-                    result(FlutterError(code: "services missing", message: nil, details: nil))
-                }
-                
-            } else {
-                result(FlutterError(code: "appSecret missing", message: nil, details: nil))
+            guard let args:[String: Any] = (call.arguments as? [String: Any]) else {
+                result(FlutterError(code: "400", message:  "Bad arguments", details: "iOS could not recognize flutter arguments in method: (start)") )
+                return
             }
+
+            let secret = args["secret"] as! String
+            let usePrivateTrack = args["usePrivateTrack"] as! Bool
+            if (usePrivateTrack) {
+                Distribute.updateTrack = .private
+            }
+
+            AppCenter.start(withAppSecret: secret, services:[
+                Analytics.self,
+                Crashes.self,
+                Distribute.self,
+            ])
         case "trackEvent":
-            NSLog("Track event")
-            if let eventName = arguments?["eventName"] as? String {
-                let properties = arguments?["properties"] as? [String: String]
-                trackEvent(eventName: eventName, properties: properties)
-                result(nil)
-            } else {
-                result(FlutterError(code: "eventName missing", message: nil, details: nil))
-            }
-            
-        case "getPlatformVersion":
-            result("iOS " + UIDevice.current.systemVersion)
+            trackEvent(call: call, result: result)
+            return
+        case "isDistributeEnabled":
+            result(Distribute.enabled)
+            return
+        case "getInstallId":
+            result(AppCenter.installId.uuidString)
+            return
+        case "configureDistribute":
+            Distribute.enabled = call.arguments as! Bool
+        case "configureDistributeDebug":
+            result(nil)
+            return
+        case "disableAutomaticCheckForUpdate":
+            Distribute.disableAutomaticCheckForUpdate()
+            return
+        case "checkForUpdate":
+            Distribute.checkForUpdate()
+            return
+        case "isCrashesEnabled":
+            result(Crashes.enabled)
+            return
+        case "configureCrashes":
+            Crashes.enabled = (call.arguments as! Bool)
+        case "isAnalyticsEnabled":
+            result(Analytics.enabled)
+            return
+        case "configureAnalytics":
+            Analytics.enabled = (call.arguments as! Bool)
         default:
-            result(FlutterMethodNotImplemented)
+            result(FlutterMethodNotImplemented);
+            return
         }
+        
+        result(nil);
     }
     
-    private func start(appSecret: String, services: [String]) {
-        var servicesList = [MSServiceAbstract.Type]()
-        if (services.contains("analytics")) {
-            servicesList.append(MSAnalytics.self)
+    private func trackEvent(call: FlutterMethodCall, result: FlutterResult) {
+        guard let args:[String: Any] = (call.arguments as? [String: Any]) else {
+            result(FlutterError(code: "400", message:  "Bad arguments", details: "iOS could not recognize flutter arguments in method: (trackEvent)") )
+            return
         }
-        if (services.contains("crashes")) {
-            servicesList.append(MSCrashes.self)
+        
+        let name = args["name"] as? String
+        let properties = args["properties"] as? [String: String]
+        if(name != nil) {
+            Analytics.trackEvent(name!, withProperties: properties)
         }
-        if (services.contains("distribute")) {
-            servicesList.append(MSDistribute.self)
-        }
-        MSAppCenter.start(appSecret, withServices: servicesList)
-    }
-    
-    private func trackEvent(eventName: String, properties: [String: String]?) {
-        MSAnalytics.trackEvent(eventName, withProperties: properties)
+        
+        result(nil)
     }
 }

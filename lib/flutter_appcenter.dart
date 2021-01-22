@@ -1,42 +1,111 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class FlutterAppcenter {
-  static const MethodChannel _channel =
+class FlutterAppCenter {
+  static const MethodChannel _methodChannel =
       const MethodChannel('flutter_appcenter');
 
-  static Future<String> get platformVersion async {
-    final String version = await _channel.invokeMethod('getPlatformVersion');
-    return version;
-  }
+  /// Start appcenter functionalities
+  static Future startAsync({
+    @required String appSecretAndroid,
+    @required String appSecretIOS,
+    enableAnalytics = true,
+    enableCrashes = true,
+    enableDistribute = false,
+    usePrivateDistributeTrack = false,
+    disableAutomaticCheckForUpdate = false,
+  }) async {
+    String appsecret;
+    if (Platform.isAndroid) {
+      appsecret = appSecretAndroid;
+    } else if (Platform.isIOS) {
+      appsecret = appSecretIOS;
+    } else {
+      throw UnsupportedError('Current platform is not supported.');
+    }
 
-  static Future start(String appSecret, List<AppCenterService> services) async {
-    List<String> servicesString =
-        services.map((service) => serviceToString(service)).toList();
-    await _channel
-        .invokeMethod("start", <String, dynamic>{"services": servicesString, "appSecret": appSecret});
-  }
+    if (appsecret == null || appsecret.isEmpty) {
+      return;
+    }
 
-  static Future trackEvent(String eventName,
-      [Map<String, String> properties]) async {
-    await _channel.invokeMethod("trackEvent", <String, dynamic>{
-      "eventName": eventName,
-      "properties": properties ?? <String, String>{}
+    WidgetsFlutterBinding.ensureInitialized();
+
+    if (disableAutomaticCheckForUpdate) {
+      await _disableAutomaticCheckForUpdateAsync();
+    }
+
+    await configureAnalyticsAsync(enabled: enableAnalytics);
+    await configureCrashesAsync(enabled: enableCrashes);
+    await configureDistributeAsync(enabled: enableDistribute);
+
+    await _methodChannel.invokeMethod('start', <String, dynamic>{
+      'secret': appsecret.trim(),
+      'usePrivateTrack': usePrivateDistributeTrack,
     });
   }
-}
 
-enum AppCenterService { Distribute, Crashes, Analytics }
-
-String serviceToString(AppCenterService service) {
-  switch (service) {
-    case AppCenterService.Distribute:
-      return "distribute";
-    case AppCenterService.Analytics:
-      return "analytics";
-    case AppCenterService.Crashes:
-      return "crashes";
+  /// Track events
+  static Future trackEventAsync(String name,
+      [Map<String, String> properties]) async {
+    await _methodChannel.invokeMethod('trackEvent', <String, dynamic>{
+      'name': name,
+      'properties': properties ?? <String, String>{},
+    });
   }
-  return "";
+
+  /// Check whether analytics is enalbed
+  static Future<bool> isAnalyticsEnabledAsync() async {
+    return await _methodChannel.invokeMethod('isAnalyticsEnabled');
+  }
+
+  /// Get appcenter installation id
+  static Future<String> getInstallIdAsync() async {
+    return await _methodChannel
+        .invokeMethod('getInstallId')
+        .then((r) => r as String);
+  }
+
+  /// Enable or disable analytics
+  static Future configureAnalyticsAsync({@required enabled}) async {
+    await _methodChannel.invokeMethod('configureAnalytics', enabled);
+  }
+
+  /// Check whether crashes is enabled
+  static Future<bool> isCrashesEnabledAsync() async {
+    return await _methodChannel.invokeMethod('isCrashesEnabled');
+  }
+
+  /// Enable or disable appcenter crash reports
+  static Future configureCrashesAsync({@required enabled}) async {
+    await _methodChannel.invokeMethod('configureCrashes', enabled);
+  }
+
+  /// Check whether appcenter distribution is enabled
+  static Future<bool> isDistributeEnabledAsync() async {
+    return await _methodChannel.invokeMethod('isDistributeEnabled');
+  }
+
+  /// Enable or disable appcenter distribution
+  static Future configureDistributeAsync({@required enabled}) async {
+    await _methodChannel.invokeMethod('configureDistribute', enabled);
+  }
+
+  /// Enable or disable appcenter distribution for debug build (Android only)
+  static Future configureDistributeDebugAsync({@required enabled}) async {
+    await _methodChannel.invokeMethod('configureDistributeDebug', enabled);
+  }
+
+  /// Disable automatic check for app updates
+  static Future _disableAutomaticCheckForUpdateAsync() async {
+    await _methodChannel.invokeMethod('disableAutomaticCheckForUpdate');
+  }
+
+  /// Manually check for app updates
+  static Future checkForUpdateAsync() async {
+    await _methodChannel.invokeMethod('checkForUpdate');
+  }
 }
