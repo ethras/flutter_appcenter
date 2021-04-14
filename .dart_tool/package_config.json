@@ -53,10 +53,10 @@
       "name": "flutter_appcenter",
       "rootUri": "../",
       "packageUri": "lib/",
-      "languageVersion": "2.1"
+      "languageVersion": "2.12"
     }
   ],
-  "generated": "2021-04-14T09:22:04.117988Z",
+  "generated": "2021-04-14T09:33:39.423895Z",
   "generator": "pub",
   "generatorVersion": "2.12.1"
 }
