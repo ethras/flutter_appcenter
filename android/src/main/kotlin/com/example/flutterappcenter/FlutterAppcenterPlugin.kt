@@ -33,7 +33,7 @@ class FlutterAppcenterPlugin(private val registrar: Registrar) : FlutterPlugin, 
     // depending on the user's project. onAttachedToEngine or registerWith must both be defined
     // in the same class.
     companion object {
-        const val methodChannelName = "com.github.hanabi1224.flutter_appcenter_bundle"
+        const val methodChannelName = "flutter_appcenter"
 
         var application: Application? = null
 
