@@ -1,5 +1,6 @@
-package com.example.flutterappcenter
+package com.ethras.flutter_appcenter
 
+import android.app.Application
 import android.util.Log
 import androidx.annotation.NonNull
 import com.microsoft.appcenter.AppCenter
@@ -16,11 +17,11 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry.Registrar
 
-
-class FlutterAppcenterPlugin(private val registrar: Registrar) : FlutterPlugin, MethodCallHandler, ActivityAware {
+/** FlutterAppcenterBundlePlugin */
+class FlutterAppcenterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         val channel = MethodChannel(flutterPluginBinding.binaryMessenger, methodChannelName)
-        channel.setMethodCallHandler(FlutterAppcenterBundlePlugin())
+        channel.setMethodCallHandler(FlutterAppcenterPlugin())
     }
 
     // This static function is optional and equivalent to onAttachedToEngine. It supports the old
@@ -41,12 +42,12 @@ class FlutterAppcenterPlugin(private val registrar: Registrar) : FlutterPlugin, 
         fun registerWith(registrar: Registrar) {
             application = registrar.activity().application
             val channel = MethodChannel(registrar.messenger(), methodChannelName)
-            channel.setMethodCallHandler(FlutterAppcenterBundlePlugin())
+            channel.setMethodCallHandler(FlutterAppcenterPlugin())
         }
     }
 
     override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
-        Log.d("onMethodCall", "[${methodChannelName}] ${call.method}")
+        Log.d("onMethodCall", "[$methodChannelName] ${call.method}")
         try {
             when (call.method) {
                 "start" -> {

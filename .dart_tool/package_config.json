@@ -26,12 +26,6 @@
       "languageVersion": "2.12"
     },
     {
-      "name": "package_info",
-      "rootUri": "file:///Users/vladimirmbassi/flutter/.pub-cache/hosted/pub.dartlang.org/package_info-0.4.3+2",
-      "packageUri": "lib/",
-      "languageVersion": "2.1"
-    },
-    {
       "name": "sky_engine",
       "rootUri": "file:///Users/vladimirmbassi/flutter/bin/cache/pkg/sky_engine",
       "packageUri": "lib/",
@@ -56,7 +50,7 @@
       "languageVersion": "2.12"
     }
   ],
-  "generated": "2021-04-14T09:33:39.423895Z",
+  "generated": "2021-04-15T13:42:55.622934Z",
   "generator": "pub",
-  "generatorVersion": "2.12.1"
+  "generatorVersion": "2.12.2"
 }

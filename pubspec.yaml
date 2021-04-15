@@ -12,7 +12,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  package_info: any
 
 # For information on the generic Dart part of this file, see the
 # following page: https://www.dartlang.org/tools/pub/pubspec
@@ -20,7 +19,7 @@ dependencies:
 # The following section is specific to Flutter.
 flutter:
   plugin:
-    androidPackage: com.example.flutterappcenter
+    androidPackage: com.ethras.flutter_appcenter
     pluginClass: FlutterAppcenterPlugin
 
   # To add assets to your plugin package, add an assets section, like this:
