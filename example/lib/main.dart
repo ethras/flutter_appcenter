@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:package_info/package_info.dart';
 import 'package:flutter_appcenter/flutter_appcenter.dart';
 
 void main() async {
@@ -21,7 +20,6 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  PackageInfo _packageInfo;
   bool _isCrashesEnabled;
   bool _isAnalyticsEnabled;
   bool _isDistributeEnabled;
@@ -30,11 +28,6 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     FlutterAppCenter.trackEventAsync('_MyAppState.initState');
-    PackageInfo.fromPlatform().then((v) {
-      setState(() {
-        _packageInfo = v;
-      });
-    });
     FlutterAppCenter.isCrashesEnabledAsync().then((v) {
       setState(() {
         _isCrashesEnabled = v;
@@ -61,25 +54,15 @@ class _MyAppState extends State<MyApp> {
         ),
         body: Container(
             padding: EdgeInsets.all(20),
-            child: _packageInfo == null
-                ? RefreshProgressIndicator()
-                : Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text('App name:\n${_packageInfo.appName}'),
-                      Text(''),
-                      Text('Package name:\n${_packageInfo.packageName}'),
-                      Text(''),
-                      Text('Version:\n${_packageInfo.version}'),
-                      Text(''),
-                      Text('Build:\n${_packageInfo.buildNumber}'),
-                      Text(''),
-                      Text('IsCrashesEnabled: $_isCrashesEnabled'),
-                      Text('IsAnalyticsEnabled: $_isAnalyticsEnabled'),
-                      Text('IsDistributeEnabled: $_isDistributeEnabled'),
-                    ],
-                  )),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text('IsCrashesEnabled: $_isCrashesEnabled'),
+                Text('IsAnalyticsEnabled: $_isAnalyticsEnabled'),
+                Text('IsDistributeEnabled: $_isDistributeEnabled'),
+              ],
+            )),
       ),
     );
   }
