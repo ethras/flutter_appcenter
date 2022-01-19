@@ -1,26 +1,23 @@
 PODS:
-  - AppCenter (4.1.0):
-    - AppCenter/Analytics (= 4.1.0)
-    - AppCenter/Crashes (= 4.1.0)
-  - AppCenter/Analytics (4.1.0):
+  - AppCenter (4.4.1):
+    - AppCenter/Analytics (= 4.4.1)
+    - AppCenter/Crashes (= 4.4.1)
+  - AppCenter/Analytics (4.4.1):
     - AppCenter/Core
-  - AppCenter/Core (4.1.0)
-  - AppCenter/Crashes (4.1.0):
+  - AppCenter/Core (4.4.1)
+  - AppCenter/Crashes (4.4.1):
     - AppCenter/Core
-  - AppCenter/Distribute (4.1.0):
+  - AppCenter/Distribute (4.4.1):
     - AppCenter/Core
   - Flutter (1.0.0)
   - flutter_appcenter (0.0.1):
-    - AppCenter (= 4.1.0)
-    - AppCenter/Distribute (= 4.1.0)
-    - Flutter
-  - package_info (0.0.1):
+    - AppCenter (= 4.4.1)
+    - AppCenter/Distribute (= 4.4.1)
     - Flutter
 
 DEPENDENCIES:
-  - Flutter (from `.symlinks/flutter/ios`)
+  - Flutter (from `Flutter`)
   - flutter_appcenter (from `.symlinks/plugins/flutter_appcenter/ios`)
-  - package_info (from `.symlinks/plugins/package_info/ios`)
 
 SPEC REPOS:
   trunk:
@@ -28,18 +25,15 @@ SPEC REPOS:
 
 EXTERNAL SOURCES:
   Flutter:
-    :path: ".symlinks/flutter/ios"
+    :path: Flutter
   flutter_appcenter:
     :path: ".symlinks/plugins/flutter_appcenter/ios"
-  package_info:
-    :path: ".symlinks/plugins/package_info/ios"
 
 SPEC CHECKSUMS:
-  AppCenter: 8832b158d17e54845c3b88a91076218f0b07174d
-  Flutter: 0e3d915762c693b495b44d77113d4970485de6ec
-  flutter_appcenter: a6bc15570eeaf3b8be6363aea9ddf6d7ed39b3cb
-  package_info: 873975fc26034f0b863a300ad47e7f1ac6c7ec62
+  AppCenter: b0b6f1190215b5f983c42934db718f3b46fff3c0
+  Flutter: 50d75fe2f02b26cc09d224853bb45737f8b3214a
+  flutter_appcenter: 5ae8be24bd8f4bc837c2b0e4fab41214114dc03b
 
-PODFILE CHECKSUM: ec81a62fe73c7b29f2764dd3fe8c221958ac6739
+PODFILE CHECKSUM: fe0e1ee7f3d1f7d00b11b474b62dd62134535aea
 
-COCOAPODS: 1.10.0
+COCOAPODS: 1.11.2

@@ -11,17 +11,23 @@ import com.microsoft.appcenter.distribute.UpdateTrack
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
+import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry.Registrar
 
+
 /** FlutterAppcenterBundlePlugin */
 class FlutterAppcenterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         val channel = MethodChannel(flutterPluginBinding.binaryMessenger, methodChannelName)
         channel.setMethodCallHandler(FlutterAppcenterPlugin())
+
+        // Updates channel
+        val updateChannel = EventChannel(flutterPluginBinding.binaryMessenger, updateEventChannelName)
+        updateChannel.setStreamHandler(UpdateStreamHandler())
     }
 
     // This static function is optional and equivalent to onAttachedToEngine. It supports the old
@@ -35,6 +41,7 @@ class FlutterAppcenterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     // in the same class.
     companion object {
         const val methodChannelName = "flutter_appcenter"
+        const val updateEventChannelName = "flutter_appcenter/update"
 
         var application: Application? = null
 
@@ -60,7 +67,7 @@ class FlutterAppcenterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
 
                     val appSecret = call.argument<String>("secret")
                     val usePrivateTrack = call.argument<Boolean>("usePrivateTrack")
-                    if (usePrivateTrack == true){
+                    if (usePrivateTrack == true) {
                         Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
                     }
 
@@ -72,6 +79,12 @@ class FlutterAppcenterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     }
 
                     AppCenter.start(application, appSecret, Analytics::class.java, Crashes::class.java, Distribute::class.java)
+                }
+                "notifyUpdateAction" -> {
+                    val action = call.arguments as Int
+                    Distribute.notifyUpdateAction(action)
+                    result.success(null)
+                    return
                 }
                 "trackEvent" -> {
                     val name = call.argument<String>("name")

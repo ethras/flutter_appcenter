@@ -5,11 +5,48 @@ import AppCenterAnalytics
 import AppCenterCrashes
 import AppCenterDistribute
 
+class UploadStreamHandler: NSObject, FlutterStreamHandler, DistributeDelegate {
+    private var eventSink: FlutterEventSink? = nil
+
+    func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
+        eventSink = events
+        Distribute.delegate = self
+        return nil
+    }
+    
+    func onCancel(withArguments arguments: Any?) -> FlutterError? {
+        eventSink = nil
+        return nil
+    }
+    
+    func distributeNoReleaseAvailable(_ distribute: Distribute) {
+        eventSink?(nil)
+      }
+    
+    func distribute(_ distribute: Distribute, releaseAvailableWith details: ReleaseDetails) -> Bool {
+        let versionName = details.shortVersion
+        let versionCode = details.version
+        let releaseNotes = details.releaseNotes
+        var map = [String: Any]()
+        map["versionName"] = versionName
+        map["versionCode"] = versionCode
+        map["releaseNotes"] = releaseNotes
+        eventSink?(map)
+      return true;
+    }
+    
+    
+}
+
 public class SwiftFlutterAppcenterPlugin: NSObject, FlutterPlugin {
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "flutter_appcenter", binaryMessenger: registrar.messenger())
         let instance = SwiftFlutterAppcenterPlugin()
         registrar.addMethodCallDelegate(instance, channel: channel)
+        
+        // Event channel
+        let eventChannel = FlutterEventChannel(name: "flutter_appcenter/update", binaryMessenger: registrar.messenger())
+        eventChannel.setStreamHandler(UploadStreamHandler())
     }
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -32,6 +69,12 @@ public class SwiftFlutterAppcenterPlugin: NSObject, FlutterPlugin {
                 Crashes.self,
                 Distribute.self,
             ])
+        case "notifyUpdateAction":
+            let value = (call.arguments as! Int)
+            let action = value == -1 ? UpdateAction.update : UpdateAction.postpone
+            Distribute.notify(action)
+            result(nil)
+            return
         case "trackEvent":
             trackEvent(call: call, result: result)
             return

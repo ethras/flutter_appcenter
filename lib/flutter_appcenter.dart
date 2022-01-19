@@ -4,9 +4,41 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+class UpdateAction {
+  static int UPDATE = -1;
+  static int POSTONE = -2;
+}
+
+class AppCenterUpdate {
+  final String versionName;
+  final String versionCode;
+  final String releaseNotes;
+
+  AppCenterUpdate(
+      {required this.versionName,
+      required this.versionCode,
+      required this.releaseNotes});
+}
+
 class FlutterAppCenter {
   static const MethodChannel _methodChannel =
       const MethodChannel('flutter_appcenter');
+
+  static const EventChannel _eventChannel =
+      const EventChannel('flutter_appcenter/update');
+
+  static Stream<AppCenterUpdate?> listenForUpdates({String? packageName}) {
+    return _eventChannel.receiveBroadcastStream(packageName).map((update) {
+      if (update == null) {
+        return null;
+      }
+      final map = Map<String, dynamic>.from(update);
+      return AppCenterUpdate(
+          versionName: map['versionName'],
+          versionCode: map['versionCode'].toString(),
+          releaseNotes: map['releaseNotes']);
+    });
+  }
 
   /// Start appcenter functionalities
   static Future startAsync({
@@ -68,6 +100,10 @@ class FlutterAppCenter {
         .then((r) => r as String);
   }
 
+  static Future notifyUpdateAction(int action) async {
+    await _methodChannel.invokeMethod('notifyUpdateAction', action);
+  }
+
   /// Enable or disable analytics
   static Future configureAnalyticsAsync({required enabled}) async {
     await _methodChannel.invokeMethod('configureAnalytics', enabled);
@@ -104,7 +140,11 @@ class FlutterAppCenter {
   }
 
   /// Manually check for app updates
-  static Future checkForUpdateAsync() async {
+  static Future checkForUpdateAsync({bool force = false}) async {
+    if (force) {
+      await configureDistributeAsync(enabled: false);
+      await configureDistributeAsync(enabled: true);
+    }
     await _methodChannel.invokeMethod('checkForUpdate');
   }
 }
